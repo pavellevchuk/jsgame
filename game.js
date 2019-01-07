@@ -59,20 +59,14 @@ class Actor {
       // this.speed = new Vector(speed.x, speed.y);
       this.speed = speed;
     }
+
+    this.bottom = this.pos.y + this.size.y;
+    this.right = this.pos.x + this.size.x;
+    this.top = this.pos.y;
+    this.left =  this.pos.x;
+
     Object.defineProperty(this, 'type', {
       value: 'actor'
-    });
-    Object.defineProperty(this, 'left', {
-      value: this.pos.x
-    });
-    Object.defineProperty(this, 'top', {
-      value: this.pos.y
-    });
-    Object.defineProperty(this, 'right', {
-      value: this.pos.x + this.size.x
-    });
-    Object.defineProperty(this, 'bottom', {
-      value: this.pos.y + this.size.y
     });
   }
   act() {}
