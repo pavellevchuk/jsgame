@@ -81,7 +81,7 @@ class Actor {
       }
     });
     Object.defineProperty(this, 'type', {
-      value: 'actor'
+      value: 'actor',
     });
   }
   act() {}
@@ -152,9 +152,7 @@ class Level {
     this.actors = actors;
     Object.defineProperty(this, 'player', {
       get: function() {
-        return this.actors.find(function(act) {
-          return act.type === 'player';
-        });
+        return this.actors.find(act => act.type === 'player');
       }
     });
   }
@@ -171,17 +169,37 @@ class Level {
     if(this.grid == undefined || this.actors.length == 1){
       return undefined;
     }
-    return this.actors.find(function(act){
-      return movingObj.isIntersect(act);
-    });
+    return this.actors.find(act => movingObj.isIntersect(act));
   }
   obstacleAt(moveTo,size){
-    if(this.grid == undefined || this.actors.length == 1){
-      return undefined;
-    }
+    // if(this.grid == undefined || this.actors.length == 1){
+    //   return undefined;
+    // }
     if(!(moveTo instanceof Vector) || !(size instanceof Vector)){
       throw Error('Один из аргументов не является вектором');
     }
-    
+    let movingObj = new Actor(moveTo,size);
+    for(let j = movingObj.top + 1; j > movingObj.bottom; j--){
+     for(let i = movingObj.left + 1; i < movingObj.right; i++){
+         if(grid[i][j] != undefined){
+           return grid[i][j];
+         }
+       }
+     }
+     return undefined;
+    }
+    removeActor(actor){
+
     }
   }
+
+
+
+
+class Player extends Actor{
+  constructor(coords){
+  super();
+  this.pos = new Vector(coords.x,coords.y - 0.5);
+  this.size = new Vector(0.8,1.5);
+}
+}
