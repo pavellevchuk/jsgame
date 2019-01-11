@@ -36,7 +36,7 @@ class Actor {
       this.pos = new Vector();
     } else {
       if (!(pos instanceof Vector)) {
-      throw Error(`${pos} не является вектором`);
+        throw Error(`${pos} не является вектором`);
       }
       // this.pos = new Vector(pos.x, pos.y);
       this.pos = pos;
@@ -61,24 +61,17 @@ class Actor {
     }
 
     Object.defineProperty(this, 'left', {
-      get: function() {
-        return this.pos.x
-      }
-    });
+      get: () => this.pos.x
+      });
+
     Object.defineProperty(this, 'top', {
-      get: function() {
-        return this.pos.y;
-      }
+      get: () => this.pos.y
     });
     Object.defineProperty(this, 'right', {
-      get: function() {
-        return this.pos.x + this.size.x;
-      }
+      get: () => this.pos.x + this.size.x
     });
     Object.defineProperty(this, 'bottom', {
-      get: function() {
-        return this.pos.y + this.size.y;
-      }
+      get:() => this.pos.y + this.size.y
     });
     Object.defineProperty(this, 'type', {
       value: 'actor',
@@ -135,11 +128,11 @@ class Actor {
 
 class Level {
   constructor(mesh, actors) {
-    this.grid = mesh;
     if (mesh == undefined) {
       this.height = 0;
       this.width = 0;
     } else {
+      this.grid = mesh;
       this.height = mesh.length;
       Object.defineProperty(this, 'width', {
         get: function() {
@@ -156,50 +149,47 @@ class Level {
       }
     });
   }
-  isFinished(){
-    if(this.status != null && this.finishDelay < 0){
+  isFinished() {
+    if (this.status != null && this.finishDelay < 0) {
       return true;
     }
     return false;
   }
-  actorAt(movingObj){
-    if(!(movingObj instanceof Actor)){
+  actorAt(movingObj) {
+    if (!(movingObj instanceof Actor)) {
       throw Error(`${movingObj} не является наследником Actor`);
     }
-    if(this.grid == undefined || this.actors.length == 1){
-      return undefined;
-    }
+    if (this.grid === undefined || this.actors.length == 1) {
+        return undefined;
+      }
     return this.actors.find(act => movingObj.isIntersect(act));
   }
-  obstacleAt(moveTo,size){
-    // if(this.grid == undefined || this.actors.length == 1){
-    //   return undefined;
-    // }
+  obstacleAt(moveTo, size) {
     if(!(moveTo instanceof Vector) || !(size instanceof Vector)){
       throw Error('Один из аргументов не является вектором');
     }
-    let movingObj = new Actor(moveTo,size);
-    for(let j = movingObj.top + 1; j > movingObj.bottom; j--){
-     for(let i = movingObj.left + 1; i < movingObj.right; i++){
-         if(grid[i][j] != undefined){
-           return grid[i][j];
-         }
-       }
-     }
-     return undefined;
+   let movingObj = new Actor(moveTo,size);
+    for( let i = moveTo.y; i <= size.y; i++){
+      for( let j = moveTo.x; j <= size.x; j++){
+        if(this.grid[i][j] != undefined){
+          return this.grid[i][j];
+        }
+      }
     }
-    removeActor(actor){
+   if (movingObj.left < 0 || movingObj.top < 0 || movingObj.right > this.width){
+     return 'wall';
+   }
+   if(movingObj.bottom > this.height){
+     return 'lava';
+   }
+    return undefined;
+    }
+  removeActor(actor) {
 
-    }
   }
-
-
-
-
-class Player extends Actor{
-  constructor(coords){
-  super();
-  this.pos = new Vector(coords.x,coords.y - 0.5);
-  this.size = new Vector(0.8,1.5);
 }
-}
+
+
+
+let v = new Level([[1,2,3,4],[1,2,3]]);
+console.log(v.obstacleAt(new Vector,new Vector));
