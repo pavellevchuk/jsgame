@@ -75,6 +75,7 @@ class Actor {
     });
     Object.defineProperty(this, 'type', {
       value: 'actor',
+      configurable: true
     });
   }
   act() {}
@@ -188,24 +189,24 @@ class Level {
     this.actors.splice(this.actors.indexOf(actor), 1);
   }
   noMoreActors(type) {
-    if(this.actors == undefined){
+    if (this.actors == undefined) {
       return true;
     }
-    for(let actor in this.actors){
-      if(actor.type === type){
+    for (let actor in this.actors) {
+      if (actor.type === type) {
         return false;
       }
     }
     return true;
   }
-  playerTouched(obstacle,movingObj){
-    if(this.noMoreActors('coin')){
+  playerTouched(obstacle, movingObj) {
+    if (this.noMoreActors('coin')) {
       this.status = 'won';
     }
-    if(obstacle === 'lava' || obstacle === 'fireball'){
+    if (obstacle === 'lava' || obstacle === 'fireball') {
       this.status = 'lost';
     }
-    if(obstacle === 'coin' && movingObj.type === 'coin'){
+    if (obstacle === 'coin' && movingObj.type === 'coin') {
       this.removeActor(movingObj);
     }
   }
@@ -251,11 +252,92 @@ class Level {
 
 
 
-class LevelParser{
-  constructor(lexicon){
+class LevelParser {
+  constructor(lexicon) {
     this.lexicon = lexicon;
   }
-  actorFromSymbol(){
-    
+  actorFromSymbol(symbol) {
+    return symbol === undefined ? undefined : this.lexicon[symbol];
+  }
+  obstacleFromSymbol(symbol) {
+    if (symbol === 'x') {
+      return 'wall';
+    }
+    if (symbol === '!') {
+      return 'lava';
+    }
+    return undefined;
+  }
+  createGrid(plan) {
+    const newPlan = plan.map(str => {
+      let arr = [];
+      for (let i = 0; i < str.length; i++) {
+        arr.push(this.obstacleFromSymbol(str[i]));
+      }
+      return arr;
+    });
+    return newPlan;
+  }
+    createActors(plan){
+          let arr = [];
+          for(let i = 0;  i < plan.length; i++){
+          for(let j = 0; j < plan[i].length; j++){
+           if(this.lexicon != undefined){
+            if(this.lexicon[plan[i][j]] != undefined  && typeof this.lexicon[plan[i][j]] === 'function'){
+              if(new this.lexicon[plan[i][j]] instanceof Actor){
+                arr.push(new this.lexicon[plan[i][j]](new Vector(j,i)));
+              }
+            }
+          }
+        }
+      }
+        return arr;
+    }
+    parse(plan){
+      return new Level(this.createGrid(plan),this.createActors(plan));
+    }
+  }
+
+
+//   const plan = [
+//   ' @ ',
+//   'x!x'
+// ];
+//
+// const actorsDict = Object.create(null);
+// actorsDict['@'] = Actor;
+//
+// const parser = new LevelParser(actorsDict);
+// const level = parser.parse(plan);
+//
+// level.grid.forEach((line, y) => {
+//   line.forEach((cell, x) => console.log(`(${x}:${y}) ${cell}`));
+// });
+//
+// level.actors.forEach(actor => console.log(`(${actor.pos.x}:${actor.pos.y}) ${actor.type}`));
+
+
+class Fireball extends Actor{
+  constructor(pos,speed){
+    super(pos,undefined,speed);
+    delete this.type;
+    Object.defineProperty(this, 'type', {
+      value: 'fireball',
+      configurable: true
+    });
+  }
+  getNextPosition(time = 1){
+     let newX = this.pos.x + (this.speed.x * time);
+     let newY = this.pos.y + (this.speed.y * time);
+     return new Vector(newX,newY);
+  }
+  handleObstacle(){
+    this.speed.x = -this.speed.x;
+    this.speed.y = -this.speed.y;
+  }
+  act(time,playground){
+  const newPos = this.getNextPosition(time)
+  this.pos.x = newPos.x;
+  this.pos.y = newPos.y;
   }
 }
