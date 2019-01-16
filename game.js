@@ -144,11 +144,12 @@ class Level {
     this.status = null;
     this.finishDelay = 1;
     this.actors = actors;
-    Object.defineProperty(this, 'player', {
-      get: function() {
-        return this.actors.find(act => act.type === 'player');
-      }
-    });
+    // Object.defineProperty(this, 'player', {
+    //   get: () => this.actors.find(act => act.type === 'player')
+    // });
+    if(this.actors != undefined){
+    this.player = this.actors.find(act => act.type === 'player');
+  }
   }
   isFinished() {
     if (this.status != null && this.finishDelay < 0) {
@@ -160,10 +161,12 @@ class Level {
     if (!(movingObj instanceof Actor)) {
       throw Error(`${movingObj} не является наследником Actor`);
     }
-    if (this.grid === undefined || this.actors.length == 1) {
-      return undefined;
+    if(this.actors != undefined){
+    if (this.grid != undefined || this.actors.length != 1) {
+      return this.actors.find(act => movingObj.isIntersect(act));
     }
-    return this.actors.find(act => movingObj.isIntersect(act));
+  }
+    return undefined;
   }
   obstacleAt(moveTo, size) {
     if (!(moveTo instanceof Vector) || !(size instanceof Vector)) {
@@ -278,25 +281,25 @@ class LevelParser {
     });
     return newPlan;
   }
-    createActors(plan){
-          let arr = [];
-          for(let i = 0;  i < plan.length; i++){
-          for(let j = 0; j < plan[i].length; j++){
-           if(this.lexicon != undefined){
-            if(this.lexicon[plan[i][j]] != undefined  && typeof this.lexicon[plan[i][j]] === 'function'){
-              if(new this.lexicon[plan[i][j]] instanceof Actor){
-                arr.push(new this.lexicon[plan[i][j]](new Vector(j,i)));
-              }
+  createActors(plan) {
+    let arr = [];
+    for (let i = 0; i < plan.length; i++) {
+      for (let j = 0; j < plan[i].length; j++) {
+        if (this.lexicon != undefined) {
+          if (this.lexicon[plan[i][j]] != undefined && typeof this.lexicon[plan[i][j]] === 'function') {
+            if (new this.lexicon[plan[i][j]] instanceof Actor) {
+              arr.push(new this.lexicon[plan[i][j]](new Vector(j, i)));
             }
           }
         }
       }
-        return arr;
     }
-    parse(plan){
-      return new Level(this.createGrid(plan),this.createActors(plan));
-    }
+    return arr;
   }
+  parse(plan) {
+    return new Level(this.createGrid(plan), this.createActors(plan));
+  }
+}
 
 
 //   const plan = [
@@ -317,27 +320,120 @@ class LevelParser {
 // level.actors.forEach(actor => console.log(`(${actor.pos.x}:${actor.pos.y}) ${actor.type}`));
 
 
-class Fireball extends Actor{
-  constructor(pos,speed){
-    super(pos,undefined,speed);
+class Fireball extends Actor {
+  constructor(pos, speed) {
+    super(pos, undefined, speed);
     delete this.type;
     Object.defineProperty(this, 'type', {
       value: 'fireball',
       configurable: true
     });
   }
-  getNextPosition(time = 1){
-     let newX = this.pos.x + (this.speed.x * time);
-     let newY = this.pos.y + (this.speed.y * time);
-     return new Vector(newX,newY);
+  getNextPosition(time = 1) {
+    let newX = this.pos.x + (this.speed.x * time);
+    let newY = this.pos.y + (this.speed.y * time);
+    return new Vector(newX, newY);
   }
-  handleObstacle(){
+  handleObstacle() {
     this.speed.x = -this.speed.x;
     this.speed.y = -this.speed.y;
   }
-  act(time,playground){
-  const newPos = this.getNextPosition(time)
-  this.pos.x = newPos.x;
-  this.pos.y = newPos.y;
+  act(time, playground) {
+    const newPos = this.getNextPosition(time);
+    if (playground.obstacleAt(newPos, this.size) == undefined) {
+      this.pos = new Vector(newPos.x,newPos.y);
+    } else {
+      this.handleObstacle();
+    }
+  }
+}
+
+
+// const time = 5;
+// const speed = new Vector(1, 0);
+// const position = new Vector(5, 5);
+//
+// const ball = new Fireball(position, speed);
+//
+// const nextPosition = ball.getNextPosition(time);
+// console.log(`Новая позиция: ${nextPosition.x}: ${nextPosition.y}`);
+//
+// ball.handleObstacle();
+// console.log(`Текущая скорость: ${ball.speed.x}: ${ball.speed.y}`);
+
+
+
+class HorizontalFireball extends Fireball{
+  constructor(pos){
+    super(pos);
+    this.speed = new Vector(2,0);
+  }
+}
+
+class VerticalFireball extends Fireball{
+  constructor(pos){
+    super(pos);
+    this.speed = new Vector(0,2);
+  }
+}
+
+class FireRain extends Fireball{
+  constructor(pos){
+    super(pos);
+    this.speed = new Vector(0,3);
+    this.default = pos;
+  }
+  handleObstacle(){
+     this.pos = this.default;
+  }
+}
+
+
+class Coin extends Actor{
+  constructor(pos){
+    super(pos);
+    delete this.type;
+    Object.defineProperty(this, 'type', {
+      value: 'coin',
+      configurable: true
+    });
+    this.size = new Vector(0.6,0.6);
+    this.pos = this.pos.plus(new Vector(0.2,0.1));
+    this.springSpeed = 8;
+    this.springDist = 0.07;
+    this.spring = Math.random() * (2 * Math.PI);
+    this.default = Object.assign({},this.pos);
+  }
+
+  updateSpring(time = 1){
+    this.spring += this.springSpeed * time;
+  }
+
+  getSpringVector(){
+    return new Vector(0,Math.sin(this.spring) * this.springDist);
+  }
+
+  getNextPosition(time = 1){
+    this.updateSpring(time);
+    return new Vector(this.default.x + this.getSpringVector().x , this.default.y + this.getSpringVector().y);
+  }
+
+  act(time){
+     const newPos = this.getNextPosition(time);
+     this.pos = new Vector(newPos.x,newPos.y);
+  }
+}
+
+
+class Player extends Actor{
+  constructor(pos){
+    super(pos);
+    this.pos = this.pos.plus(new Vector(0,-(0.5)));
+    this.size = new Vector(0.8,1.5);
+    delete this.type;
+    Object.defineProperty(this, 'type', {
+      value: 'player',
+      configurable: true
+    });
   }
 }
