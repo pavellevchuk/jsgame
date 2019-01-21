@@ -128,29 +128,15 @@ class Actor {
 
 
 class Level {
-  constructor(mesh, actors) {
-    if (mesh == undefined) {
-      this.height = 0;
-      this.width = 0;
-    } else {
-      this.grid = mesh;
-      this.height = mesh.length;
-      Object.defineProperty(this, 'width', {
-        get: function() {
-          return Math.max(...(mesh.map(row => row.length)));
-        }
-      });
-    }
+  constructor(grid = [], actors = []) {
+    this.grid = grid;
+    this.actors = actors;
+    this.height = grid.length;
+    this.width = Math.max(0, ...grid.map(string => string.length));
     this.status = null;
     this.finishDelay = 1;
-    this.actors = actors;
-    // Object.defineProperty(this, 'player', {
-    //   get: () => this.actors.find(act => act.type === 'player')
-    // });
-    if(this.actors != undefined){
-    this.player = this.actors.find(act => act.type === 'player');
-  }
-  }
+    this.player = actors.find(actor => actor.type === "player");
+  };
   isFinished() {
     if (this.status != null && this.finishDelay < 0) {
       return true;
@@ -161,33 +147,39 @@ class Level {
     if (!(movingObj instanceof Actor)) {
       throw Error(`${movingObj} не является наследником Actor`);
     }
-    if(this.actors != undefined){
-    if (this.grid != undefined || this.actors.length != 1) {
+    if(this.actors.length != 0){
+    if (this.grid.length != 0 || this.actors.length != 1) {
       return this.actors.find(act => movingObj.isIntersect(act));
     }
   }
     return undefined;
   }
+
   obstacleAt(moveTo, size) {
-    if (!(moveTo instanceof Vector) || !(size instanceof Vector)) {
-      throw Error('Один из аргументов не является вектором');
-    }
-    let movingObj = new Actor(moveTo, size);
-    for (let i = moveTo.y; i <= size.y; i++) {
-      for (let j = moveTo.x; j <= size.x; j++) {
-        if (this.grid[i][j] != undefined) {
-          return this.grid[i][j];
-        }
+  if (!(moveTo instanceof Vector) || !(size instanceof Vector)) {
+    throw new Error("Нужно передать объект типа Vector");
+  };
+
+  let top = Math.floor(moveTo.y);
+  let right = Math.ceil(moveTo.x + size.x);
+  let bottom = Math.ceil(moveTo.y + size.y);
+  let left = Math.floor(moveTo.x);
+
+  if (bottom > this.height) {
+    return('lava');
+  }else if (left < 0 || top < 0 || right > this.width) {
+    return 'wall';
+  }
+  for (let i = top; i < bottom; i++) {
+    for (let j = left;  j< right; j++) {
+      if (this.grid[i][j] !== undefined) {
+        return this.grid[i][j];
       }
     }
-    if (movingObj.left < 0 || movingObj.top < 0 || movingObj.right > this.width) {
-      return 'wall';
-    }
-    if (movingObj.bottom > this.height) {
-      return 'lava';
-    }
-    return undefined;
   }
+  return undefined;
+}
+
   removeActor(actor) {
     this.actors.splice(this.actors.indexOf(actor), 1);
   }
