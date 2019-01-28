@@ -341,7 +341,7 @@ const schemas = [
     "                       ",
     "         =      |      ",
     " @ |  o            o   ",
-    "xxxxxxxxx!!!!!!!xxxxxxx",
+    "xxxxxxxxx!!!!!xxxxxxxxx",
     "                       "
   ],
   [
