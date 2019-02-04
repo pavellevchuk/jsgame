@@ -110,12 +110,9 @@ class Level {
     if (!(movingObj instanceof Actor)) {
       throw Error(`${movingObj} не является наследником Actor`);
     }
-    if (this.actors.length != 0) {
-      if (this.grid.length != 0 || this.actors.length != 1) {
+    if (this.actors.length != 0 && (this.grid.length != 0 || this.actors.length != 1)) {
         return this.actors.find(act => movingObj.isIntersect(act));
-      }
     }
-    return undefined;
   }
 
   obstacleAt(moveTo, size) {
@@ -140,17 +137,13 @@ class Level {
         }
       }
     }
-    return undefined;
   }
 
   removeActor(actor) {
     this.actors.splice(this.actors.indexOf(actor), 1);
   }
   noMoreActors(type) {
-    if (this.actors.find(actor => actor.type === type) != undefined) {
-      return false;
-    }
-    return true;
+  return this.actors.find(actor => actor.type === type) == undefined;
   }
   playerTouched(obstacle, movingObj) {
     if (obstacle === 'lava' || obstacle === 'fireball') {
@@ -180,7 +173,6 @@ class LevelParser {
     if (symbol === '!') {
       return 'lava';
     }
-    return undefined;
   }
   createGrid(plan) {
     const newPlan = plan.map(str => {
@@ -196,12 +188,8 @@ class LevelParser {
     let arr = [];
     for (let i = 0; i < plan.length; i++) {
       for (let j = 0; j < plan[i].length; j++) {
-        if (this.lexicon != undefined) {
-          if (this.lexicon[plan[i][j]] != undefined && typeof this.lexicon[plan[i][j]] === 'function') {
-            if (new this.lexicon[plan[i][j]] instanceof Actor) {
+          if (this.lexicon != undefined && this.lexicon[plan[i][j]] != undefined && typeof this.lexicon[plan[i][j]] === 'function' && new this.lexicon[plan[i][j]] instanceof Actor) {
               arr.push(new this.lexicon[plan[i][j]](new Vector(j, i)));
-            }
-          }
         }
       }
     }
